@@ -11,6 +11,7 @@ import { ContactService } from './contact.service';
 import { CreateContactDto } from './dto/create-contact.dto/create-contact.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
+import { Role } from '@prisma/client';
 import { Roles } from '../auth/roles.decorator';
 
 @Controller('contact')
@@ -23,14 +24,14 @@ export class ContactController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
+  @Roles(Role.ADMIN)
   @Get()
   findAll() {
     return this.contactService.findAll();
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
+  @Roles(Role.ADMIN)
   @Patch(':id/respond')
   markResponded(@Param('id') id: string) {
     return this.contactService.markResponded(id);

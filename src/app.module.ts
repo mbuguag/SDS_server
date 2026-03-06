@@ -10,8 +10,15 @@ import { ContactModule } from './contact/contact.module';
 import { MailModule } from './mail/mail.module';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), AuthModule,
-    UsersModule, PrismaModule, SubscribersModule, ContactModule, MailModule],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    AuthModule,
+    UsersModule,
+    PrismaModule,
+    SubscribersModule,
+    ContactModule,
+    MailModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

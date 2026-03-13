@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SubscribersService } from './subscribers.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { MailService } from '../mail/mail.service';
 
 describe('SubscribersService', () => {
   let service: SubscribersService;
@@ -18,6 +19,12 @@ describe('SubscribersService', () => {
               update: jest.fn(),
               delete: jest.fn(),
             },
+          },
+        },
+        {
+          provide: MailService,
+          useValue: {
+            sendMail: jest.fn(),
           },
         },
       ],

@@ -18,7 +18,6 @@ export class MailService {
       },
     });
   }
-
   async sendMail(to: string, subject: string, html: string) {
     const info = await this.transporter.sendMail({
       from: process.env.SMTP_FROM,

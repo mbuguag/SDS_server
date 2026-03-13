@@ -8,6 +8,9 @@ import { ConfigModule } from '@nestjs/config';
 import { SubscribersModule } from './subscribers/subscribers.module';
 import { ContactModule } from './contact/contact.module';
 import { MailModule } from './mail/mail.module';
+import { AnalyticsModule } from './analytics/analytics.module';
+import { BlogModule } from './blog/blog.module';
+import { MediaModule } from './media/media.module';
 
 @Module({
   imports: [
@@ -18,6 +21,9 @@ import { MailModule } from './mail/mail.module';
     SubscribersModule,
     ContactModule,
     MailModule,
+    AnalyticsModule,
+    BlogModule,
+    MediaModule,
   ],
   controllers: [AppController],
   providers: [AppService],

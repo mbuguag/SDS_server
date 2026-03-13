@@ -21,12 +21,24 @@ enum ContactStatus {
   RESPONDED
 }
 
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  SCHEDULED
+}
+
+
+
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
   password  String
   role      Role     @default(ADMIN)
   createdAt DateTime @default(now())
+
+  posts Post[]
+  mediaAssets MediaAsset[]
 }
 
 model Subscriber {
@@ -35,6 +47,10 @@ model Subscriber {
   name      String?
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
+
+
+  @@index([isActive])
+  @@index([createdAt])
 }
 
 model ContactRequest {
@@ -43,5 +59,119 @@ model ContactRequest {
   email     String
   message   String
   status    ContactStatus @default(NEW)
+  respondedAt DateTime?
   createdAt DateTime      @default(now())
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Category {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now())
+
+  posts Post[]
+}
+
+model Tag {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now())
+
+  posts PostTag[]
+}
+
+
+model Post {
+  id          String     @id @default(uuid())
+  title       String
+  slug        String     @unique
+  excerpt     String?
+  content     String
+  status      PostStatus @default(DRAFT)
+  publishedAt DateTime?
+  scheduledAt DateTime?
+  viewCount   Int        @default(0)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  seoTitle       String?
+  seoDescription String?
+  canonicalUrl   String?
+  readingTime    Int?
+  isFeatured     Boolean   @default(false)
+  heroLayout     String?
+  contentBlocks  Json?
+  coverImageId   String?
+  ogImageId      String?
+
+  authorId   String
+  author     User      @relation(fields: [authorId], references: [id])
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id])
+  tags       PostTag[]
+  coverImage MediaAsset? @relation("CoverImage", fields: [coverImageId], references: [id])
+  ogImage    MediaAsset? @relation("OgImage", fields: [ogImageId], references: [id])
+  attachments PostAttachment[]
+  revisions  PostRevision[]
+
+  @@index([status])
+  @@index([authorId])
+  @@index([categoryId])
+  @@index([createdAt])
+  @@index([slug])
+  @@index([isFeatured])
+}
+
+model PostTag {
+  postId String
+  tagId  String
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
+}
+
+model MediaAsset {
+  id           String   @id @default(uuid())
+  url          String
+  originalName String
+  mimeType     String
+  size         Int
+  width        Int?
+  height       Int?
+  altText      String?
+  createdAt    DateTime @default(now())
+  createdById  String?
+
+  createdBy User? @relation(fields: [createdById], references: [id])
+  coverOf   Post[] @relation("CoverImage")
+  ogOf      Post[] @relation("OgImage")
+  attachments PostAttachment[]
+
+  @@index([createdAt])
+}
+
+model PostAttachment {
+  id        String   @id @default(uuid())
+  caption   String?
+  postId    String
+  mediaId   String
+  createdAt DateTime @default(now())
+
+  post  Post       @relation(fields: [postId], references: [id], onDelete: Cascade)
+  media MediaAsset @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+}
+
+model PostRevision {
+  id           String   @id @default(uuid())
+  postId       String
+  content      String
+  contentBlocks Json?
+  createdAt    DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
 }

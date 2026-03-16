@@ -14,6 +14,7 @@ import {
   CreateTagDto,
   ListPostsQueryDto,
 } from './dto/blog.dto';
+import { PublicListPostsQueryDto } from './dto/public-blog.dto';
 
 @Injectable()
 export class BlogService {
@@ -30,11 +31,30 @@ export class BlogService {
     attachments: { include: { media: true } },
   } satisfies Prisma.PostInclude;
 
+  async findPublishedPosts(query: PublicListPostsQueryDto) {
+    const adminQuery: ListPostsQueryDto = {
+      ...query,
+      status: PostStatus.PUBLISHED,
+    };
+    return this.findAllPosts(adminQuery);
+  }
+
+  async findPublishedPostBySlug(slug: string) {
+    const post = await this.prisma.post.findFirst({
+      where: { slug, status: PostStatus.PUBLISHED },
+      include: this.postInclude,
+    });
+    if (!post) throw new NotFoundException(`Published post ${slug} not found`);
+    return post;
+  }
+
   async findAllPosts(query: ListPostsQueryDto) {
     const {
       status,
       categoryId,
+      categorySlug,
       tagId,
+      tagSlug,
       search,
       startDate,
       endDate,
@@ -47,9 +67,13 @@ export class BlogService {
     if (status) where.status = status;
     if (categoryId) {
       where.categoryId = categoryId || null;
+    } else if (categorySlug) {
+      where.category = { slug: categorySlug };
     }
     if (tagId) {
       where.tags = { some: { tagId } };
+    } else if (tagSlug) {
+      where.tags = { some: { tag: { slug: tagSlug } } };
     }
     if (search) {
       where.OR = [
@@ -283,6 +307,82 @@ export class BlogService {
       : 0;
     const readingTime = dto.readingTime ?? Math.max(1, Math.ceil(wordCount / 200));
     return { html: dto.content, readingTime };
+  }
+
+  async incrementPostView(slug: string) {
+    const post = await this.prisma.post.findFirst({
+      where: { slug, status: PostStatus.PUBLISHED },
+      select: { id: true, viewCount: true },
+    });
+    if (!post) {
+      throw new NotFoundException(`Published post ${slug} not found`);
+    }
+    const updated = await this.prisma.post.update({
+      where: { id: post.id },
+      data: { viewCount: { increment: 1 } },
+      select: { id: true, viewCount: true },
+    });
+    return updated;
+  }
+
+  async findPublicCategories() {
+    const categories = await this.prisma.category.findMany({
+      where: { posts: { some: { status: PostStatus.PUBLISHED } } },
+      orderBy: { name: 'asc' },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        posts: {
+          where: { status: PostStatus.PUBLISHED },
+          select: { id: true },
+        },
+      },
+    });
+    return categories.map(({ posts, ...category }) => ({
+      ...category,
+      publishedCount: posts.length,
+    }));
+  }
+
+  async findPublicTags() {
+    const tags = await this.prisma.tag.findMany({
+      where: { posts: { some: { post: { status: PostStatus.PUBLISHED } } } },
+      orderBy: { name: 'asc' },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        posts: {
+          where: { post: { status: PostStatus.PUBLISHED } },
+          select: { postId: true },
+        },
+      },
+    });
+    return tags.map(({ posts, ...tag }) => ({
+      ...tag,
+      publishedCount: posts.length,
+    }));
+  }
+
+  async publishDuePosts() {
+    const duePosts = await this.prisma.post.findMany({
+      where: {
+        status: PostStatus.SCHEDULED,
+        scheduledAt: { lte: new Date() },
+      },
+      select: { id: true },
+    });
+    if (!duePosts.length) {
+      return { updated: 0 };
+    }
+    const ids = duePosts.map((post) => post.id);
+    const now = new Date();
+    await this.prisma.post.updateMany({
+      where: { id: { in: ids } },
+      data: { status: PostStatus.PUBLISHED, publishedAt: now },
+    });
+    return { updated: ids.length };
   }
 
   // ── Categories ─────────────────────────────────────────────

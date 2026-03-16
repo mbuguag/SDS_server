@@ -203,7 +203,15 @@ export class ListPostsQueryDto {
 
   @IsOptional()
   @IsString()
+  categorySlug?: string;
+
+  @IsOptional()
+  @IsString()
   tagId?: string;
+
+  @IsOptional()
+  @IsString()
+  tagSlug?: string;
 
   @IsOptional()
   @IsString()

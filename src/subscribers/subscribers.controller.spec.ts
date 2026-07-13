@@ -1,6 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { Reflector } from '@nestjs/core';
 import { SubscribersController } from './subscribers.controller';
 import { SubscribersService } from './subscribers.service';
+import { RateLimitGuard } from '../common/rate-limit/rate-limit.guard';
+import { RateLimitService } from '../common/rate-limit/rate-limit.service';
 
 describe('SubscribersController', () => {
   let controller: SubscribersController;
@@ -18,6 +21,9 @@ describe('SubscribersController', () => {
             remove: jest.fn(),
           },
         },
+        RateLimitGuard,
+        Reflector,
+        RateLimitService,
       ],
     }).compile();
 

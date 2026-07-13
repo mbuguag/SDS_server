@@ -1,6 +1,8 @@
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import * as bcrypt from 'bcrypt';
+import services from '../../src/data/services';
+import { sectors } from '../../src/data/sectors';
 
 const databaseUrl = process.env.DATABASE_URL;
 
@@ -36,6 +38,7 @@ async function main() {
     }));
 
   await seedBlogData(admin.id);
+  await seedSolutionsData();
   await seedSampleActivity();
 }
 
@@ -110,6 +113,92 @@ async function seedBlogData(adminId: string) {
       },
     },
   });
+}
+
+async function seedSolutionsData() {
+  await Promise.all(
+    services.map((service, index) =>
+      prisma.solution.upsert({
+        where: { slug: service.slug },
+        update: {
+          type: 'SERVICE',
+          title: service.title,
+          summary: service.summary,
+          heroTitle: service.heroTitle,
+          heroDescription: service.heroDescription,
+          heroMedia: service.heroMedia,
+          icon: service.icon,
+          overview: service.overview,
+          challenges: service.challenges,
+          capabilities: service.capabilities,
+          process: service.process,
+          differentiators: service.differentiators,
+          useCases: service.useCases,
+          outcomes: service.outcomes,
+          faqs: service.faqs,
+          visualGallery: service.visualGallery,
+          gallery: service.gallery,
+          status: 'PUBLISHED',
+          sortOrder: index,
+        },
+        create: {
+          type: 'SERVICE',
+          slug: service.slug,
+          title: service.title,
+          summary: service.summary,
+          heroTitle: service.heroTitle,
+          heroDescription: service.heroDescription,
+          heroMedia: service.heroMedia,
+          icon: service.icon,
+          overview: service.overview,
+          challenges: service.challenges,
+          capabilities: service.capabilities,
+          process: service.process,
+          differentiators: service.differentiators,
+          useCases: service.useCases,
+          outcomes: service.outcomes,
+          faqs: service.faqs,
+          visualGallery: service.visualGallery,
+          gallery: service.gallery,
+          status: 'PUBLISHED',
+          sortOrder: index,
+        },
+      }),
+    ),
+  );
+
+  await Promise.all(
+    sectors.map((sector, index) => {
+      const slug = sector.name
+        .toLowerCase()
+        .replace(/&/g, 'and')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+
+      return prisma.solution.upsert({
+        where: { slug },
+        update: {
+          type: 'SECTOR',
+          title: sector.name,
+          summary: sector.description,
+          heroTitle: sector.name,
+          heroDescription: sector.description,
+          status: 'PUBLISHED',
+          sortOrder: index,
+        },
+        create: {
+          type: 'SECTOR',
+          slug,
+          title: sector.name,
+          summary: sector.description,
+          heroTitle: sector.name,
+          heroDescription: sector.description,
+          status: 'PUBLISHED',
+          sortOrder: index,
+        },
+      });
+    }),
+  );
 }
 
 async function seedSampleActivity() {

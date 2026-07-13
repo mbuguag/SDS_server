@@ -12,6 +12,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
 import { BlogModule } from './blog/blog.module';
 import { MediaModule } from './media/media.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { SolutionsModule } from './solutions/solutions.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     AnalyticsModule,
     BlogModule,
     MediaModule,
+    SolutionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,6 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { Reflector } from '@nestjs/core';
 import { ContactController } from './contact.controller';
 import { ContactService } from './contact.service';
+import { RateLimitGuard } from '../common/rate-limit/rate-limit.guard';
+import { RateLimitService } from '../common/rate-limit/rate-limit.service';
 
 describe('ContactController', () => {
   let controller: ContactController;
@@ -17,6 +20,9 @@ describe('ContactController', () => {
             markResponded: jest.fn(),
           },
         },
+        RateLimitGuard,
+        Reflector,
+        RateLimitService,
       ],
     }).compile();
 

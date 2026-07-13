@@ -28,6 +28,11 @@ enum PostStatus {
   SCHEDULED
 }
 
+enum SolutionType {
+  SERVICE
+  SECTOR
+}
+
 
 
 model User {
@@ -174,4 +179,38 @@ model PostRevision {
   createdAt    DateTime @default(now())
 
   post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model Solution {
+  id              String       @id @default(uuid())
+  type            SolutionType @default(SERVICE)
+  title           String
+  slug            String       @unique
+  summary         String
+  heroTitle       String?
+  heroDescription String?
+  heroMedia       Json?
+  icon            String?
+  overview        String?
+  challenges      Json?
+  capabilities    Json?
+  process         Json?
+  differentiators Json?
+  useCases        Json?
+  outcomes        Json?
+  faqs            Json?
+  visualGallery   Json?
+  gallery         Json?
+  status          PostStatus   @default(DRAFT)
+  sortOrder       Int          @default(0)
+  seoTitle        String?
+  seoDescription  String?
+  canonicalUrl    String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([type])
+  @@index([status])
+  @@index([sortOrder])
+  @@index([slug])
 }

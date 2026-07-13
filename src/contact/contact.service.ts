@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateContactDto } from './dto/create-contact.dto/create-contact.dto';
 import { MailService } from '../mail/mail.service';
@@ -15,29 +15,50 @@ export class ContactService {
   ) {}
 
   async create(data: CreateContactDto) {
-    const contact = await this.prisma.contactRequest.create({
-      data,
-    });
+    let contact: { id: string } | null = null;
 
     try {
+      if (!process.env.ADMIN_EMAIL) {
+        throw new InternalServerErrorException(
+          'Contact service email is not configured.',
+        );
+      }
+
+      contact = await this.prisma.contactRequest.create({
+        data,
+      });
+
       await this.mailService.sendMail(
-        process.env.ADMIN_EMAIL!,
+        process.env.ADMIN_EMAIL,
         'New Contact Request',
         contactNotificationTemplate(data.name, data.email, data.message),
       );
-
-      await new Promise((resolve) => setTimeout(resolve, 1500));
 
       await this.mailService.sendMail(
         data.email,
         'We received your message',
         contactAutoReply(data.name),
       );
+
+      return contact;
     } catch (error) {
       this.logger.error('Contact emails failed to send', error);
-    }
 
-    return contact;
+      if (contact?.id) {
+        await this.prisma.contactRequest
+          .delete({ where: { id: contact.id } })
+          .catch((rollbackError) => {
+            this.logger.error(
+              'Failed to roll back contact request after mail failure',
+              rollbackError,
+            );
+          });
+      }
+
+      throw new InternalServerErrorException(
+        'Unable to process contact request at this time.',
+      );
+    }
   }
 
   async findAll() {
